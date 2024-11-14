@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-blue-300">
+
+  <div id="game" class="relative w-full max-w-md h-[500px] bg-blue-200 overflow-hidden rounded-lg shadow-lg">
+    <div id="bird" class="absolute w-12 h-12 bg-yellow-400 rounded-full"></div>
+    <div id="score" class="absolute top-0 left-0 p-4 text-white text-2xl font-bold">0</div>
+  </div>
+
+  <script>
+    const game = document.getElementById('game');
+    const bird = document.getElementById('bird');
+    const scoreDisplay = document.getElementById('score');
+
+    let birdY = 200;
+    let birdSpeed = 0;
+    let gravity = 0.5;
+    let score = 0;
+    let pipes = [];
+    let gameRunning = true;
+
+    function setupGame() {
+      bird.style.top = birdY + 'px';
+      document.addEventListener('keydown', flap);
+      setInterval(updateGame, 20);
+      setInterval(createPipe, 1500);
+    }
+
+    function flap() {
+      if (gameRunning) birdSpeed = -8;
+    }
+
+    function createPipe() {
+      if (!gameRunning) return;
+
+      const pipeGap = 130;
+      const pipeHeight = Math.floor(Math.random() * (game.clientHeight - pipeGap - 50)) + 50;
+
+      const topPipe = document.createElement('div');
+      topPipe.classList.add('absolute', 'w-16', 'bg-green-600');
+      topPipe.style.height = `${pipeHeight}px`;
+      topPipe.style.top = '0';
+      topPipe.style.right = '0';
+      game.appendChild(topPipe);
+
+      const bottomPipe = document.createElement('div');
+      bottomPipe.classList.add('absolute', 'w-16', 'bg-green-600');
+      bottomPipe.style.height = `${game.clientHeight - pipeHeight - pipeGap}px`;
+      bottomPipe.style.bottom = '0';
+      bottomPipe.style.right = '0';
+      game.appendChild(bottomPipe);
+
+      pipes.push({ top: topPipe, bottom: bottomPipe, x: game.clientWidth });
+    }
+
+    function updateGame() {
+      birdSpeed += gravity;
+      birdY += birdSpeed;
+      bird.style.top = birdY + 'px';
+
+      pipes.forEach(pipe => {
+        pipe.x -= 2;
+        pipe.top.style.right = `${game.clientWidth - pipe.x}px`;
+        pipe.bottom.style.right = `${game.clientWidth - pipe.x}px`;
+
+        if (pipe.x < 50 && pipe.x > 20) {
+          const birdBottom = birdY + bird.clientHeight;
+          if (birdY < pipe.top.clientHeight || birdBottom > game.clientHeight - pipe.bottom.clientHeight) {
+            gameOver();
+          }
+        }
+
+        if (pipe.x < -50) {
+          pipe.top.remove();
+          pipe.bottom.remove();
+          pipes.shift();
+          score++;
+          scoreDisplay.textContent = score;
+        }
+      });
+
+      if (birdY >= game.clientHeight - bird.clientHeight || birdY <= 0) {
+        gameOver();
+      }
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      bird.classList.add('bg-red-500');
+      document.removeEventListener('keydown', flap);
+      alert(`Game Over! Your score: ${score}`);
+    }
+
+    setupGame();
+  </script>
+</body>
+</html>
